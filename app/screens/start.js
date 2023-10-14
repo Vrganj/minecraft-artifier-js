@@ -78,29 +78,42 @@ const store = {
                 schem.decode(new Uint8Array(event.target.result), (err, data) => {
                     try {
                         if (err && err.code === "Z_DATA_ERROR") {
-                            errFunc('There is something wrong with this .schematic file..<br>(File decompression error.)')
+                            errFunc('There is something wrong with this .schem file..<br>(File decompression error.)')
                             return
                         } else if (err) {
-                            errFunc('There is something wrong with this .schematic file..<br>(Unknown error.)')
+                            errFunc('There is something wrong with this .schem file..<br>(Unknown error.)')
                             return
                         }
 
-                        const blockIds = new Uint8Array(data.value['Blocks'].value)
-                        const dataIds = new Uint8Array(data.value['Data'].value)
-                        const arr = new Uint8Array(blockIds.length)
-                        const height = data.value['Height'].value
-                        let width, facing
-                        if (data.value['WEOffsetX'] && data.value['WEOffsetY'] && data.value['WEOffsetZ']) {
+                        const reversePalette = {};
+
+                        for (const [key, value] of Object.entries(data.value['Palette'].value)) {
+                            reversePalette[value.value] = key;
+                        }
+
+                        const blockData = new Uint8Array(data.value['BlockData'].value);
+
+                        console.log(reversePalette);
+                        console.log(data.value['Palette'].value);
+                        console.log(data.value['BlockData'].value)
+
+                        const arr = new Uint8Array(blockData.length)
+                        const height = data.value['Height'].value;
+                        let width, facing;
+
+                        if (data.value['Offset']) {
+                            const offset = new Uint8Array(data.value['Offset'].value);
+
                             if (data.value['Width'].value === 1) {
                                 width = data.value['Length'].value
-                                if (data.value['WEOffsetZ'].value > 0) {
+                                if (offset[2] > 0) {
                                     facing = 'south'
                                 } else {
                                     facing = 'north'
                                 }
                             } else if (data.value['Length'].value === 1) {
                                 width = data.value['Width'].value
-                                if (data.value['WEOffsetX'].value > 0) {
+                                if (offset[0] > 0) {
                                     facing = 'east'
                                 } else {
                                     facing = 'west'
@@ -109,7 +122,7 @@ const store = {
                                 width = data.value['Width'].value
                                 facing = 'north'
                             } else {
-                                errFunc('There is something wrong with this .schematic file..<br>(Width or length of the schematic must equal 1.)')
+                                errFunc('There is something wrong with this .schem file..<br>(Width or length of the schematic must equal 1.)')
                                 return
                             }
                         } else {
@@ -123,19 +136,20 @@ const store = {
                                 width = data.value['Width'].value
                                 facing = 'north'
                             } else {
-                                errFunc('There is something wrong with this .schematic file..<br>(Width or length of the schematic must equal 1.)')
+                                errFunc('There is something wrong with this .schem file..<br>(Width or length of the schematic must equal 1.)')
                                 return
                             }
                         }
 
                         for (let i = 0; i < arr.length; i++) {
-                            let int
+                            let int;
                             if (facing === 'south' || facing === 'east') {
-                                int = (height - Math.ceil((i + 1) / width)) * width + (i % width)
+                                int = (height - Math.ceil((i + 1) / width)) * width + (i % width);
                             } else if (facing === 'north' || facing === 'west') {
-                                int = arr.length - i - 1 
+                                int = arr.length - i - 1 ;
                             }
-                            const block = store.parent.findBlockByGameId(blockIds[int], dataIds[int])
+                            const block = store.parent.blocksDefault.find(block => block.game_id_13 === reversePalette[blockData[int]]);
+                            console.log(int);
                             if (block) {
                                 arr[i] = block.id
                             }
@@ -153,13 +167,13 @@ const store = {
                         store.parent.hideLoading()
                     } catch (err) {
                     	console.error(err)
-                        errFunc('There is something wrong with this .schematic file..<br>(File structure error.)')
+                        errFunc('There is something wrong with this .schem file..<br>(File structure error.)')
                         return
                     }
                 })
             } catch (err) {
             	console.error(err)
-                errFunc('There is something wrong with this .schematic file..<br>(File structure error.)')
+                errFunc('There is something wrong with this .schem file..<br>(File structure error.)')
                 return
             }
         }
@@ -184,18 +198,18 @@ const store = {
                 ext = e.dataTransfer.files[0].name.match(regexp)[2]
                 name = e.dataTransfer.files[0].name.match(regexp)[1]
             } else {
-                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schematic file.', 5000)
+                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schem file.', 5000)
                 return
             }
 
             if (ext.match(/(jpeg|jpg|png|bmp)/i)) {
                 this.setNameFile(name)
                 this.uploadImage(_URL.createObjectURL(e.dataTransfer.files[0]))
-            } else if (ext.match(/(schematic)/i)) {
+            } else if (ext.match(/(schem)/i)) {
                 this.setNameFile(name)
                 this.uploadSchematic(e.dataTransfer.files[0])
             } else {
-                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schematic file.', 5000)
+                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schem file.', 5000)
             }
         }
 
@@ -209,19 +223,19 @@ const store = {
                 name = e.target.files[0].name.match(regexp)[1]
             } else {
                 e.target.value = null
-                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schematic file.', 5000)
+                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schem file.', 5000)
                 return
             }
 
             if (ext.match(/(jpeg|jpg|png|bmp)/i)) {
                 this.setNameFile(name)
                 this.uploadImage(_URL.createObjectURL(e.target.files[0]))
-            } else if (ext.match(/(schematic)/i)) {
+            } else if (ext.match(/(schem)/i)) {
                 this.setNameFile(name)
                 this.uploadSchematic(e.target.files[0])
             } else {
                 e.target.value = null
-                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schematic file.', 5000)
+                store.parent.errors.triggerError('start-screen', 'Wrong file type. Try image (jpg, png, bmp) or .schem file.', 5000)
             }
         }
     }

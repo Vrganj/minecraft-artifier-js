@@ -6,18 +6,10 @@ function SchematicsHelper() {
 
 	this.encode = (obj) => {
 		const writer = new Nbt.Writer()
-		writer.compound(obj)
-		const compound = new Uint8Array(writer.getData())
-		const compoundName = 'Schematic'
-		const output = new Uint8Array(3 + compoundName.length + compound.byteLength)
-		output[0] = 10
-		output[2] = compoundName.length
-		compoundName.split('').forEach((i, k) => {
-			output[k + 3] = i.charCodeAt(0)
-		})
-		output.set(compound, 3 + compoundName.length)
-		var gzip = new this.Zlib.Gzip(output)
-		var compressed = gzip.compress()
+		writer.compound(obj);
+		const output = new Uint8Array(writer.getData());
+		const gzip = new this.Zlib.Gzip(output)
+		const compressed = gzip.compress()
 		return compressed
 	}
 

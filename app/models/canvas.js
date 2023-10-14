@@ -1464,8 +1464,8 @@ function MineartCanvas() {
 
     this.save = (facing) => {
         const schem = new SchematicsHelper()
-        const blockIds = []
-        const dataIds = []
+        const palette = {};
+        const blockData = [];
         let width, length, offsetZ, offsetX
 
         for (let i = 0; i < store.imageConvertedHex.length; i++) {
@@ -1478,23 +1478,17 @@ function MineartCanvas() {
             const pos = this._getPosFromInt(int)
             const block = store.getBlockById(this._getBlockIdByPosition(pos.x, pos.y))
             if (block) {
-                let dataId = block.data_id
-
-                if (block.axis) {
-                    if (facing === 'west' || facing === 'east') {
-                        dataId += 8
-                    } else if (facing === 'north' || facing === 'south') {
-                        dataId += 4
-                    }
+                if (!palette[block.game_id_13]) {
+                    palette[block.game_id_13] = {
+                        type: 'int',
+                        value: Object.keys(palette).length
+                    };
                 }
 
-                blockIds.push(block.block_id)
-                dataIds.push(dataId)
+                blockData.push(palette[block.game_id_13].value);
             } else {
-                blockIds.push(0)
-                dataIds.push(0)
+                blockData.push(0);
             }
-            
         }
 
         switch (facing) {
@@ -1523,25 +1517,45 @@ function MineartCanvas() {
                 offsetZ = 0
                 break
         }
-
-        var tag = {
-            Blocks: { type: 'byteArray', value: blockIds },
-            Data: { type: 'byteArray', value: dataIds },
-            Height: { type: 'short', value: store.imageHeight },
-            Length: { type: 'short', value: length },
-            Materials: { type: 'string', value: 'Alpha' },
-            TileEntities: { type: 'list', value: {
+        
+        const tag = {
+            Schematic: {
                 type: 'compound',
-                value: []
-                } 
-            },
-            WEOffsetX: { type: 'int', value: offsetX },
-            WEOffsetY: { type: 'int', value: 0 },
-            WEOffsetZ: { type: 'int', value: offsetZ },
-            WEOriginX: { type: 'int', value: 0 },
-            WEOriginY: { type: 'int', value: 0 },
-            WEOriginZ: { type: 'int', value: 0 },
-            Width: { type: 'short', value: width }
+                value: {
+                    Version: {
+                        type: 'int',
+                        value: 2
+                    },
+                    DataVersion: {
+                        type: 'int',
+                        value: 2860
+                    },
+                    Width: {
+                        type: 'short',
+                        value: width 
+                    },
+                    Height: {
+                        type: 'short',
+                        value: store.imageHeight
+                    },
+                    Length: {
+                        type: 'short',
+                        value: length
+                    },
+                    Palette: {
+                        type: 'compound',
+                        value: palette
+                    },
+                    BlockData: {
+                        type: 'byteArray',
+                        value: blockData
+                    },
+                    Offset: {
+                        type: 'intArray',
+                        value: [offsetX, 0, offsetZ]
+                    }
+                }
+            }
         }
 
         const blob = new Blob([schem.encode(tag)], {type : 'text/plain'})

@@ -252,7 +252,7 @@ const store = {
             const data = store.parent.mineartCanvas.getBlockInfoByMouseXY(e.x, e.y)
             if (data && data.info) {
                 this.$footbarLeft.innerHTML = `
-                    X: <b>${data.x}</b>, Y: <b>${data.y}</b>, Name: <b>${data.info.name}</b>, Game ID: <b>${data.info.game_id}</b> Pos: ${data.blockPos}
+                    X: <b>${data.x}</b>, Y: <b>${data.y}</b>, Name: <b>${data.info.name}</b>, Game ID: <b>${data.info.game_id_13}</b> Pos: ${data.blockPos}
                 `
             } else if (data) {
                 this.$footbarLeft.innerHTML = `
@@ -356,7 +356,7 @@ const store = {
         this.$saveBtn.onclick = () => {
             if (this.$saveInput.value) {
                 this.$saveBtn.classList.remove('border-danger')
-                this.$saveBtn.download = `${this.$saveInput.value}.schematic`
+                this.$saveBtn.download = `${this.$saveInput.value}.schem`
             } else {
                 this.$saveBtn.classList.add('border-danger')
                 return
@@ -415,14 +415,14 @@ const store = {
                 ext = e.target.files[0].name.match(regexp)[2]
                 name = e.target.files[0].name.match(regexp)[1]
             } else {
-                store.parent.errors.triggerError('editor-screen', 'Wrong file type. Try .schematic file.', 5000)
+                store.parent.errors.triggerError('editor-screen', 'Wrong file type. Try .schem file.', 5000)
                 return
             }
-            if (ext.match(/(schematic)/i)) {
+            if (ext.match(/(schem)/i)) {
                 store.parent.startScreen.setNameFile(name)
                 store.parent.startScreen.uploadImage(_URL.createObjectURL(e.target.files[0]))
             } else {
-                store.parent.errors.triggerError('editor-screen', 'Wrong file type. Try .schematic file.', 5000)
+                store.parent.errors.triggerError('editor-screen', 'Wrong file type. Try .schem file.', 5000)
                 return
             }
 
